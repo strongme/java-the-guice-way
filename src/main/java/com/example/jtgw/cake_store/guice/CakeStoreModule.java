@@ -7,10 +7,10 @@ import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.inject.Singleton;
 
+import com.example.jtgw.cake_store.CakeStore;
 import com.example.jtgw.cake_store.guice.annotation.AlipayTag;
 import com.example.jtgw.cake_store.guice.annotation.LogInvoke;
 import com.example.jtgw.cake_store.guice.annotation.WechatPayTag;
-import com.example.jtgw.cake_store.CakeStore;
 import com.example.jtgw.component.Advertiser;
 import com.example.jtgw.component.Cooker;
 import com.example.jtgw.component.Deliver;
@@ -19,6 +19,7 @@ import com.example.jtgw.component.Notifier;
 import com.example.jtgw.component.Packager;
 import com.example.jtgw.component.Pay;
 import com.example.jtgw.component.Seller;
+import com.example.jtgw.component.Slogan;
 import com.example.jtgw.component.StringWrapper;
 import com.example.jtgw.component.impl.AliPay;
 import com.example.jtgw.component.impl.DefaultAdvertiser;
@@ -35,7 +36,6 @@ import com.example.jtgw.interceptor.InvokeLogger;
 import com.example.jtgw.util.CookerUtil;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
-import com.google.inject.matcher.Matcher;
 import com.google.inject.matcher.Matchers;
 import com.google.inject.multibindings.Multibinder;
 import com.google.inject.multibindings.OptionalBinder;
@@ -48,10 +48,11 @@ public class CakeStoreModule extends AbstractModule {
   @Override
   protected void configure() {
     bind(Cooker.class).to(DefaultCooker.class)
-        .in(Singleton.class); // linked binding and scope singleton and provide the direct provider binding (implicit provider binding)
+        .asEagerSingleton(); // linked binding and scope singleton and provide the direct provider binding (implicit provider binding)
     //    bind(Seller.class).to(DefaultSeller.class); // untargeted binding
     bind(String.class).toInstance("plastic package material"); // instance binding
-    bind(StringWrapper.class).toInstance(new StringWrapper()); // auto inject to the instance that's being injected
+    bind(Slogan.class).toInstance(new Slogan("🔊🔊🔊🔊 Cake 🍰🍰🍰 of the year, come and enjoy! 🔊🔊🔊🔊"));
+    bind(StringWrapper.class).toInstance(new StringWrapper()); // automatic injection to the instance that's being injected
 
     bind(Packager.class).toConstructor(
         DefaultPackager.class.getConstructor(String.class)); // constructor binding
@@ -76,7 +77,9 @@ public class CakeStoreModule extends AbstractModule {
     requestStaticInjection(CookerUtil.class);
 
     // aop
-    bindInterceptor(Matchers.any(), Matchers.annotatedWith(LogInvoke.class), new InvokeLogger());
+    InvokeLogger invokeLogger = new InvokeLogger();
+    requestInjection(invokeLogger);
+    bindInterceptor(Matchers.any(), Matchers.annotatedWith(LogInvoke.class), invokeLogger);
   }
 
   @ProvidesIntoSet
@@ -85,9 +88,13 @@ public class CakeStoreModule extends AbstractModule {
   }
 
   public static class AdvertiserProvider implements Provider<Advertiser> {
+
+    @Inject
+    private Slogan slogan;
+
     @Override
     public Advertiser get() {
-      return new DefaultAdvertiser("🔊🔊🔊🔊 Cake 🍰🍰🍰 of the year, come and enjoy! 🔊🔊🔊🔊");
+      return new DefaultAdvertiser(slogan.getContent());
     }
   }
 
