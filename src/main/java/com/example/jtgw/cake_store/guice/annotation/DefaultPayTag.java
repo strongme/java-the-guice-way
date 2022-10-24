@@ -14,5 +14,5 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 @BindingAnnotation // or @Qualifier
 @Target({ FIELD, PARAMETER, METHOD, TYPE })
 @Retention(RUNTIME)
-public @interface WechatPayTag {
+public @interface DefaultPayTag {
 }
